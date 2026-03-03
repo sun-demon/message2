@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- Theme -->
+    <rect width="1000" height="1000" fill="#1976D2"/>
+
+    <!--Turbines -->
+    <polygon fill="white" points="335,680 425,680 380,800" />
+    <polygon fill="white" points="575,680 665,680 620,800" />
+
+    <!-- Lines under turbines -->
+    <line x1="380" y1="840" x2="380" y2="1100" stroke="white" stroke-width="18" stroke-linecap="round"/>
+    <line x1="620" y1="840" x2="620" y2="1100" stroke="white" stroke-width="18" stroke-linecap="round"/>
+
+    <!-- Airplane body -->
+    <polygon fill="white"
+        points="
+        500,120
+        760,720
+        560,690
+        500,670
+        440,690
+        240,720
+        "
+    />
+
+    <!-- Clear airplane center -->
+    <polygon fill="#1976D2"
+        points="
+        498,138
+        502,138
+        560,680
+        500,660
+        440,680
+        "
+    />
+
+    <!-- Center line -->
+    <line x1="500" y1="142" x2="500" y2="665" stroke="white" stroke-width="10" stroke-linecap="round"/>
+
+</svg>
