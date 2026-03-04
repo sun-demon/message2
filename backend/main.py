@@ -1,7 +1,10 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
 from dotenv import load_dotenv
+
+from auth.routes import router as auth_router
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +30,8 @@ async def root():
 async def ping():
     return {"ping": "pong"}
 
+
+app.include_router(auth_router)
 
 #  Start point for launching of python main.py (optional)
 if __name__ == "__main__":
