@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.user import User
 from auth import schemas, utils
 from auth.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from routers.chats import create_saved_messages_chat
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,6 +61,8 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    create_saved_messages_chat(db, db_user)
     
     return db_user
 
@@ -93,12 +97,34 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
 
 
 # For backward compatibility (if necessary)
-@router.post("/token", response_model=schemas.Token)
-def token_login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
+@router.post("/token", response_model=schemas.Token, include_in_schema=False)
+def token_login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
     """
-    An alternative endpoint for compatibility with OAuth2.
+    OAuth2 compatible token endpoint.
+    Accepts application/x-www-form-urlencoded data.
     """
-    return login(form_data, db)
+    user = utils.authenticate_user(db, form_data.username, form_data.password)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = utils.create_access_token(
+        data={"sub": user.username, "user_id": user.id},
+        expires_delta=access_token_expires
+    )
+    
+    user.last_seen = datetime.now(timezone.utc)
+    db.commit()
+    
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/me", response_model=schemas.UserResponse)
@@ -109,5 +135,5 @@ def get_current_user(
     """
     Getting information about the current user.
     """
-    user = utils.get_current_user(db, token)
+    user = utils.get_current_user(token, db)
     return user
