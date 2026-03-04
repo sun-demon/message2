@@ -1,8 +1,4 @@
-import datetime
-
 from sqlalchemy import Column, DateTime, func
-
-from database import Base
 
 
 class TimestampMixin:
