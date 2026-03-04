@@ -11,9 +11,17 @@ class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    phone = Column(String(20), unique=True, nullable=False)
-    username = Column(String(50), unique=True, index=True, nullable=False)
+
+    # Contact information (at least one must be filled in)
+    phone = Column(String(20), unique=True, index=True, nullable=True)
     email = Column(String(100), unique=True, index=True, nullable=True)
+
+    # User name (required)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+
+    # You can create a separate field for bots
+    is_bot = Column(Boolean, default=False)
+
     hashed_password = Column(String(200), nullable=False)
     
     # Profile
