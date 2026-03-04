@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, validator, field_serializer
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator, ValidationInfo
 
 
 # Schemes for creating a user
@@ -40,8 +40,10 @@ class UserCreate(BaseModel):
         description="Flag indicating if this is a bot account"
     )
     
-    @validator('phone')
-    def normalize_phone(cls, v):
+    @field_validator('phone')
+    @classmethod
+    def normalize_phone(cls, v: Optional[str]) -> Optional[str]:
+        """Normalize phone number: remove non-digits and add + prefix"""
         if v is None:
             return v
         
@@ -53,17 +55,17 @@ class UserCreate(BaseModel):
         
         return f'+{digits}'
 
-    @validator('email', always=True)
-    def check_contact(cls, v, values):
+    @field_validator('email')
+    @classmethod
+    def check_contact(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
         """
-        A validator that verifies the presence of at least one contact.
-        It is called after all fields.
+        Validator that verifies the presence of at least one contact.
+        Called after all fields are validated.
         """
-        # If this is an email call, check the phone from values
-        phone = values.get('phone')
-        email = v
+        # Get phone value from validation context
+        phone = info.data.get('phone')
         
-        if not phone and not email:
+        if not phone and not v:
             raise ValueError('Either phone or email must be provided')
         
         return v
