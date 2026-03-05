@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from auth.routes import router as auth_router
-from routers import chats
+from routers import chats, messages
 
 # Load environment variables from .env file
 load_dotenv()
@@ -32,6 +32,7 @@ async def ping():
 
 app.include_router(auth_router)
 app.include_router(chats.router)
+app.include_router(messages.router)
 
 #  Start point for launching of python main.py (optional)
 if __name__ == "__main__":
