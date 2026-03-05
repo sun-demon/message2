@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, DateTime, func
+from sqlalchemy import Column, DateTime, Integer, ForeignKey, String, Table, func
 from sqlalchemy.orm import relationship
 
-from database import Base
+from db.session import Base
 from models.base import TimestampMixin
 
 # Many-to-many participants (intermediate table for chat participants)

@@ -1,4 +1,4 @@
-from database import engine
+from db.session import engine
 import models
 
 print("Creating database tables...")

@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator, ValidationInfo
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 
 
 # Schemes for creating a user

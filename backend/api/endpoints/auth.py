@@ -4,17 +4,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from database import get_db
+from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from core import security
+from core.security import create_access_token, get_password_hash, oauth2_scheme
+from db.session import get_db
 from models.user import User
-from auth import schemas, utils
-from auth.config import ACCESS_TOKEN_EXPIRE_MINUTES
-from routers.chats import create_saved_messages_chat
+from services.auth_service import AuthService
+from services.chat_service import ChatService
+from schemas.auth import Token, UserCreate, UserLogin, UserResponse 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=schemas.UserResponse)
-def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+@router.post("/register", response_model=UserResponse)
+def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Registration of a new user.
     Supports registration by phone OR email (at least one).
@@ -46,7 +49,7 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
             )
     
     # Hashing the password
-    hashed_password = utils.get_password_hash(user_data.password)
+    hashed_password = get_password_hash(user_data.password)
     
     # Creating a user
     db_user = User(
@@ -62,18 +65,18 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
-    create_saved_messages_chat(db, db_user)
+    ChatService.create_saved_messages_chat(db, db_user)
     
     return db_user
 
 
-@router.post("/login", response_model=schemas.Token)
-def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
+@router.post("/login", response_model=Token)
+def login(login_data: UserLogin, db: Session = Depends(get_db)):
     """
     Log in to the system.
     login can be: username, phone, or email.
     """
-    user = utils.authenticate_user(db, login_data.login, login_data.password)
+    user = AuthService.authenticate_user(db, login_data.login, login_data.password)
     
     if not user:
         raise HTTPException(
@@ -84,7 +87,7 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     
     # Creating a token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = utils.create_access_token(
+    access_token = create_access_token(
         data={"sub": user.username, "user_id": user.id},
         expires_delta=access_token_expires
     )
@@ -97,7 +100,7 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
 
 
 # For backward compatibility (if necessary)
-@router.post("/token", response_model=schemas.Token, include_in_schema=False)
+@router.post("/token", response_model=Token, include_in_schema=False)
 def token_login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -106,7 +109,7 @@ def token_login(
     OAuth2 compatible token endpoint.
     Accepts application/x-www-form-urlencoded data.
     """
-    user = utils.authenticate_user(db, form_data.username, form_data.password)
+    user = AuthService.authenticate_user(db, form_data.username, form_data.password)
     
     if not user:
         raise HTTPException(
@@ -116,7 +119,7 @@ def token_login(
         )
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = utils.create_access_token(
+    access_token = create_access_token(
         data={"sub": user.username, "user_id": user.id},
         expires_delta=access_token_expires
     )
@@ -127,13 +130,13 @@ def token_login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.get("/me", response_model=schemas.UserResponse)
+@router.get("/me", response_model=UserResponse)
 def get_current_user(
-    token: str = Depends(utils.oauth2_scheme),
+    token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
     """
     Getting information about the current user.
     """
-    user = utils.get_current_user(token, db)
+    user = security.get_current_user(token, db)
     return user
