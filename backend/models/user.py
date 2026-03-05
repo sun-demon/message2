@@ -1,9 +1,9 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
-from database import Base
+from db.session import Base
 from models.base import TimestampMixin
 
 

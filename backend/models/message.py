@@ -1,11 +1,11 @@
 from datetime import datetime, UTC
 
 from sqlalchemy import (
-    Column, Integer, String, Text, ForeignKey, Boolean, JSON, DateTime, UniqueConstraint
+    Boolean, Column, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 
-from database import Base
+from db.session import Base
 from models.base import TimestampMixin
 
 
